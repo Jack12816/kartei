@@ -5,7 +5,7 @@
     <img src="docs/assets/project-light.png" alt="kartei" width="600">
   </picture>
   <br>
-  I got 99 repos, but finding shit ain’t one.
+  I got 99 repos, <del>but</del> and finding shit <del>ain’t</del> is one.
   <br>
   <br>
 </p>
