@@ -100,7 +100,11 @@ The pipeline per run:
 2. Discover repositories: walk the start paths, prune at every
    directory containing `.git`. Pruning implements the nested-repo
    rule — throwaway clones inside a repository's tree never become
-   index candidates.
+   index candidates. Directories listed in `index.nested` are the
+   exception: below them the walk continues through every repository
+   root, so repositories within repositories (at any depth) are
+   indexed as repositories of their own. Their files are not tracked
+   by the enclosing repository, so nothing is indexed twice.
 3. Per repository, cheapest check first:
    * HEAD unchanged and worktree clean on both sides -> skip without
      touching a single file.

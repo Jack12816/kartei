@@ -40,7 +40,10 @@ fn examples_env() -> &'static Env {
 /// its repository roots with empty `.kartei-repo` files instead. The
 /// markers are dropped from the copy, and the repositories are
 /// initialized deepest first, so a parent never records its nested
-/// checkouts as tracked content.
+/// checkouts as tracked content. A fixture's own ignore rules ship as
+/// `.kartei-gitignore` (a real `.gitignore` would apply to the kartei
+/// repository itself and hide fixture files from it) and become the
+/// repository's `.gitignore` in the copy.
 ///
 /// @param source the checked-in examples tree
 /// @param target the temporary copy to materialize
@@ -51,6 +54,10 @@ fn materialize_examples(source: &Path, target: &Path) {
     roots.sort_by_key(|root| std::cmp::Reverse(root.components().count()));
     for root in roots {
         std::fs::remove_file(root.join(".kartei-repo")).unwrap();
+        let ignores = root.join(".kartei-gitignore");
+        if ignores.is_file() {
+            std::fs::rename(ignores, root.join(".gitignore")).unwrap();
+        }
         commit_all(&root);
     }
 }
@@ -243,6 +250,34 @@ fn ignores_nested_repositories() {
             "nested repo {nested} must not be indexed"
         );
     }
+}
+
+#[test]
+fn indexes_nested_repositories_below_configured_roots() {
+    // The same trap, but chat-unread is listed as nested root: the
+    // throwaway checkouts become repositories of their own, at any
+    // depth (checkout holds deps/jsonx and deps/utilx)
+    let env = Env::new(&[]);
+    let tree = env.dir.path().join("examples");
+    materialize_examples(&examples_dir(), &tree);
+    let root = tree.join("Erlang/chat-unread");
+    env.configure(
+        &[&tree],
+        &format!("nested = [{:?}]\n", root.display().to_string()),
+    );
+    env.stderr(&["index"]);
+    let repos = env.stdout(&["stats"]);
+    for nested in ["chat-unread", "checkout", "jsonx", "utilx"] {
+        assert!(
+            repos.lines().any(|line| line.starts_with(nested)),
+            "nested repo {nested} must be indexed, got: {repos}"
+        );
+    }
+    let rows = env.stdout(&["query", "jsonx: @func version"]);
+    assert!(
+        rows.contains("src/jsonx.erl"),
+        "nested repo content must be searchable, got: {rows}"
+    );
 }
 
 #[test]

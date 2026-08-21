@@ -39,6 +39,13 @@ pub const EXAMPLE_CONFIG: &str = r#"[index]
 # Start paths; each is recursively searched for git repository roots.
 paths = ["/home/you/projects"]
 
+# Nested repositories: the walk stops at the first repository root, so
+# repositories within repositories (eg. throwaway clones below tmp/)
+# stay invisible. Directories listed here are the exception — below
+# them every nested repository, at any depth, is discovered and
+# indexed as a repository of its own (named by its directory).
+# nested = ["/home/you/projects/platform-monorepo"]
+
 # Ignore list: matching files are skipped entirely at indexing (no
 # file or symbol rows). Every entry matches against the repo-relative
 # file path in one of three flavors:
@@ -119,6 +126,10 @@ pub struct Config {
 pub struct IndexConfig {
     /// Start paths recursively searched for git repository roots.
     pub paths: Vec<PathBuf>,
+    /// Directories below which nested repositories (repos within
+    /// repos, at any depth) are discovered and indexed too.
+    #[serde(default)]
+    pub nested: Vec<PathBuf>,
     /// Ignore entries whose files are skipped entirely at indexing.
     #[serde(default)]
     pub ignores: Vec<String>,
@@ -353,6 +364,20 @@ mod tests {
     fn parses_empty_default_ignores() {
         let config = parse("[index]\npaths = [\"/tmp\"]").unwrap();
         assert!(config.index.ignores.is_empty());
+    }
+
+    #[test]
+    fn parses_empty_default_nested_roots() {
+        let config = parse("[index]\npaths = [\"/tmp\"]").unwrap();
+        assert!(config.index.nested.is_empty());
+    }
+
+    #[test]
+    fn parses_nested_roots() {
+        let config =
+            parse("[index]\npaths = [\"/tmp\"]\nnested = [\"/tmp/mono\"]")
+                .unwrap();
+        assert_eq!(config.index.nested, vec![PathBuf::from("/tmp/mono")]);
     }
 
     /// Build a compiled ignore matcher from the given entries.

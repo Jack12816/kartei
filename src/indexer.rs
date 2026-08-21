@@ -96,7 +96,7 @@ pub fn run(
     let started = Instant::now();
     let mut stats = Stats::default();
 
-    let repos = discover::discover(&config.index.paths)?;
+    let repos = discover::discover(&config.index.paths, &config.index.nested)?;
     stats.repos = repos.len();
 
     prune_vanished_repos(conn, &repos)?;

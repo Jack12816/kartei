@@ -11,7 +11,10 @@ marked by an empty `.kartei-repo` file instead. The test harness
 copies this tree into a temporary directory, turns every marked
 directory into a git repository (deepest first, so the parent records
 nothing about its nested checkouts) and indexes the copy — the
-checked-in tree itself is never touched.
+checked-in tree itself is never touched. For the same reason a
+fixture's ignore rules ship as `.kartei-gitignore` — a real
+`.gitignore` would apply to this repository too and hide fixture files
+from it — and are renamed to `.gitignore` in the copy.
 
     Ruby/acme-api            API classes, lib namespace, config/jwt.yml
     Ruby/blog-engine         second Ruby repo (prefix disambiguation)
