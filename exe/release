@@ -75,7 +75,7 @@ git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null \
 # Bump the version in Cargo.toml and let Cargo.lock follow
 echo "> Bumping $(current-version) -> ${VERSION}"
 sed -i "0,/^version = \".*\"/s//version = \"${VERSION}\"/" Cargo.toml
-cargo update --workspace --offline --quiet
+cargo update --workspace --quiet
 
 # Smoke-test the build so a broken tree never gets tagged
 echo '> Building the release binary'

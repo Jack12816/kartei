@@ -14,7 +14,7 @@ jobs:
     name: Style (fmt, clippy)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # build.rs stamps the commit height as build number
           fetch-depth: 0
@@ -31,7 +31,7 @@ jobs:
     name: Test (release)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # build.rs stamps the commit height as build number
           fetch-depth: 0
