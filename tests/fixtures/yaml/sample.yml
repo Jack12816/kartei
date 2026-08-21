@@ -1,0 +1,41 @@
+name: kartei
+server:
+  host: localhost
+  ports:
+    - 80
+    - 443
+jobs:
+  - name: build
+    steps:
+      - run: make all
+  - name: test
+flow: {alpha: 1, beta: 2}
+base: &shared
+  retries: 3
+copy: *shared
+deep:
+  a:
+    b:
+      c:
+        d:
+          e:
+            f:
+              g:
+                h:
+                  i:
+                    j: omitted
+merged:
+  <<: *shared
+  own: 1
+override:
+  <<: *shared
+  retries: 9
+chain: &outer
+  <<: *shared
+  extra: 1
+twice:
+  <<: *outer
+loop: &self
+  <<: *self
+---
+second: document

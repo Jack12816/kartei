@@ -1,0 +1,12 @@
+# Runs one incremental kartei indexing pass. Activated by
+# kartei-index.timer; not meant to be enabled on its own.
+[Unit]
+Description=kartei incremental code-symbol indexing
+
+[Service]
+Type=oneshot
+ExecStart=%h/.cargo/bin/kartei index
+# Indexing is background housekeeping: yield CPU and IO to
+# interactive work
+Nice=10
+IOSchedulingClass=idle

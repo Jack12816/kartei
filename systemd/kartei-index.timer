@@ -1,0 +1,15 @@
+# Schedules the incremental kartei indexing pass. The interval counts
+# from the previous activation, and systemd never starts the service
+# while a prior run is still active — overlap protection comes for
+# free (the in-process flock stays as belt and braces).
+[Unit]
+Description=kartei incremental code-symbol indexing timer
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=3min
+# Catch up on missed runs after suspend/resume
+Persistent=true
+
+[Install]
+WantedBy=timers.target

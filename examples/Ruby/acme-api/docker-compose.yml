@@ -1,0 +1,13 @@
+x-defaults: &defaults
+  restart: unless-stopped
+  env_file: .env
+
+services:
+  app:
+    <<: *defaults
+    build: .
+    ports:
+      - "3000:3000"
+  db:
+    <<: *defaults
+    image: postgres:16

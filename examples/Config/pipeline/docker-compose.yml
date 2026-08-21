@@ -1,0 +1,19 @@
+x-common: &common
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    valkey:
+      condition: service_healthy
+
+services:
+  scheduler:
+    <<: *common
+    image: pipeline/scheduler:latest
+  worker:
+    <<: *common
+    image: pipeline/worker:latest
+  postgres:
+    image: postgres:16
+  valkey:
+    image: valkey/valkey:8
