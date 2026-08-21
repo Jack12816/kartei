@@ -76,15 +76,19 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           path: dist
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/*.tar.gz
-            dist/*.sha256
-          generate_release_notes: true
-          # Tags like v1.0.0-rc1 are published as prerelease
-          prerelease: ${{ contains(github.ref_name, '-') }}
+      - name: Publish
+        # The gh CLI ships with the runner image and authenticates with
+        # the job token; tags like v1.0.0-rc1 are published as prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--generate-notes --verify-tag)
+          case "${GITHUB_REF_NAME}" in
+            *-*) args+=(--prerelease) ;;
+          esac
+          gh release create "${GITHUB_REF_NAME}" "${args[@]}" \
+            --repo "${GITHUB_REPOSITORY}" dist/*.tar.gz dist/*.sha256
