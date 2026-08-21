@@ -267,16 +267,54 @@ fn indexes_nested_repositories_below_configured_roots() {
     );
     env.stderr(&["index"]);
     let repos = env.stdout(&["stats"]);
-    for nested in ["chat-unread", "checkout", "jsonx", "utilx"] {
+    for nested in [
+        "chat-unread ",
+        "chat-unread/tmp/checkout ",
+        "chat-unread/tmp/checkout/deps/jsonx ",
+        "chat-unread/tmp/checkout/deps/utilx ",
+    ] {
         assert!(
             repos.lines().any(|line| line.starts_with(nested)),
             "nested repo {nested} must be indexed, got: {repos}"
         );
     }
-    let rows = env.stdout(&["query", "jsonx: @func version"]);
+    let rows = env.stdout(&[
+        "query",
+        "chat-unread/tmp/checkout/deps/jsonx: @func version",
+    ]);
     assert!(
         rows.contains("src/jsonx.erl"),
         "nested repo content must be searchable, got: {rows}"
+    );
+}
+
+#[test]
+fn renames_stored_repositories_on_reindex() {
+    // A nested checkout indexed before its parent was listed as
+    // nested root carries the bare basename; listing the root must
+    // rename it on the next run instead of keeping the stale name
+    let env = Env::new(&[]);
+    let tree = env.dir.path().join("examples");
+    materialize_examples(&examples_dir(), &tree);
+    let inner = tree.join("Erlang/chat-unread/tmp/checkout");
+    env.configure(&[&inner], "");
+    env.stderr(&["index"]);
+    assert!(env.stdout(&["stats"]).contains("\ncheckout "));
+
+    let root = tree.join("Erlang/chat-unread");
+    env.configure(
+        &[&tree],
+        &format!("nested = [{:?}]\n", root.display().to_string()),
+    );
+    env.stderr(&["index"]);
+    let repos = env.stdout(&["stats"]);
+    assert!(
+        repos.contains("\nchat-unread/tmp/checkout "),
+        "the stored name must follow discovery, got: {repos}"
+    );
+    assert!(
+        !repos.contains("\ncheckout "),
+        "the stale name must be gone, got: {repos}"
     );
 }
 

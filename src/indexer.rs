@@ -162,6 +162,16 @@ fn index_repo(
         )
         .optional()?;
 
+    // Keep the stored name in sync with discovery: the root is the
+    // identity of a repository, its name can change (eg. once it is
+    // qualified as nested checkout below a parent of the same name)
+    if let Some((id, _, _)) = &stored {
+        conn.execute(
+            "UPDATE repos SET name = ?1 WHERE id = ?2 AND name != ?1",
+            params![repo.name, id],
+        )?;
+    }
+
     // Fast path: unchanged HEAD and a clean worktree on both sides
     // means nothing to do — skip even the stat sweep
     if !full

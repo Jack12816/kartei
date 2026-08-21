@@ -119,7 +119,7 @@ database lives at `~/.local/share/kartei/index.db` (override with
 | Key | Default | Meaning |
 |---|---|---|
 | `index.paths` | — (required) | start paths searched for git repos |
-| `index.nested` | `[]` | directories below which nested git repos (repos within repos, any depth) are indexed as repos of their own; elsewhere the walk stops at the first repo root |
+| `index.nested` | `[]` | directories below which nested git repos (repos within repos, any depth) are indexed as repos of their own, named `parent/path/within` (`kartei/kartei`); elsewhere the walk stops at the first repo root |
 | `index.ignores` | `[]` | files skipped entirely at indexing: path parts (`/fixtures/vcr_cassettes/`), `glob:**/*.snap`, `regex:\.min\.js$` |
 | `index.max_file_size` | `2097152` | extraction size cap in bytes |
 | `index.resolve_yaml` | `true` | resolve YAML anchors/aliases/merges into inherited key symbols; re-index with `--full` after changing |

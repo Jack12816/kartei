@@ -103,8 +103,12 @@ The pipeline per run:
    index candidates. Directories listed in `index.nested` are the
    exception: below them the walk continues through every repository
    root, so repositories within repositories (at any depth) are
-   indexed as repositories of their own. Their files are not tracked
-   by the enclosing repository, so nothing is indexed twice.
+   indexed as repositories of their own, named after the enclosing
+   repository plus their path within it (`kartei/kartei`) — the
+   basename alone would collide with the parent in the classic
+   checkout-in-checkout layout and resolve targets against the wrong
+   root. Their files are not tracked by the enclosing repository, so
+   nothing is indexed twice.
 3. Per repository, cheapest check first:
    * HEAD unchanged and worktree clean on both sides -> skip without
      touching a single file.

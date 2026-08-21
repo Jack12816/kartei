@@ -311,10 +311,12 @@ pub fn resolve_repos(
 /// @return the atom and the remaining term, or +nil+ without an atom
 fn split_atom(input: &str) -> Option<(&str, &str)> {
     let (atom, rest) = input.split_once(':')?;
+    // Nested repositories carry their path as name (`kartei/kartei`),
+    // hence the slash
     if atom.is_empty()
-        || !atom
-            .chars()
-            .all(|chr| chr.is_ascii_alphanumeric() || chr == '-' || chr == '_')
+        || !atom.chars().all(|chr| {
+            chr.is_ascii_alphanumeric() || matches!(chr, '-' | '_' | '/' | '.')
+        })
     {
         return None;
     }
@@ -670,6 +672,24 @@ mod tests {
         let mut abbrevs = no_abbrevs();
         abbrevs.insert("aa".to_string(), "acme-api".to_string());
         let parsed = parse(&conn, &abbrevs, "aa: User").unwrap();
+        assert_eq!(parsed.repo_ids, Some(vec![1]));
+    }
+
+    #[test]
+    fn resolves_nested_repo_atoms_spelled_with_slashes() {
+        let conn = conn_with_repos();
+        conn.execute_batch(
+            "INSERT INTO repos (id, name, root, dirty, indexed_at)
+             VALUES (3, 'acme-api/tmp/vendor', '/r/acme-api/tmp/vendor',
+                     0, 0);",
+        )
+        .unwrap();
+        let parsed =
+            parse(&conn, &no_abbrevs(), "acme-api/tmp/vendor: User").unwrap();
+        assert_eq!(parsed.repo_ids, Some(vec![3]));
+        assert_eq!(parsed.term, "User");
+        // The exact parent name still wins over the nested prefix
+        let parsed = parse(&conn, &no_abbrevs(), "acme-api: User").unwrap();
         assert_eq!(parsed.repo_ids, Some(vec![1]));
     }
 

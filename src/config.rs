@@ -43,7 +43,8 @@ paths = ["/home/you/projects"]
 # repositories within repositories (eg. throwaway clones below tmp/)
 # stay invisible. Directories listed here are the exception — below
 # them every nested repository, at any depth, is discovered and
-# indexed as a repository of its own (named by its directory).
+# indexed as a repository of its own, named after the enclosing
+# repository plus its path within (`kartei/kartei`, `app/tmp/vendor`).
 # nested = ["/home/you/projects/platform-monorepo"]
 
 # Ignore list: matching files are skipped entirely at indexing (no
