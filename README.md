@@ -10,6 +10,8 @@
   <br>
 </p>
 
+[![Continuous Integration](https://github.com/Jack12816/kartei/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Jack12816/kartei/actions/workflows/ci.yml)
+
 A personal code-symbol index and search CLI. kartei discovers git
 repositories under configured start paths, extracts classes, modules,
 methods, constants, make targets, YAML keys, markdown headings and
@@ -197,9 +199,18 @@ esac
     cargo test                        # unit + integration tests
     cargo clippy --all-targets        # must stay warning-free
     cargo fmt --check                 # 80-column house style
+    exe/release 0.2.0                 # bump, commit, tag, push
 
 The `examples/` tree in the repository root is the integration
 testing ground: a small, fictional multi-repo file tree including a
 nested-repository trap (see `examples/README.md` for how the tests
 materialize it as git repositories). `docs/ARCHITECTURE.md`
 documents the design and the checklist for adding a language.
+`exe/release VERSION` bumps the crate version, commits, tags
+`vVERSION` and pushes — the tag triggers the GitHub release workflow
+that builds and publishes the binaries.
+
+## License
+
+MIT — see `LICENSE`. The vendored Dockerfile grammar
+(`vendor/tree-sitter-dockerfile`) keeps its own MIT license file.

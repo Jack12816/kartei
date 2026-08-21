@@ -1,0 +1,44 @@
+# Continuous integration: the same quality gates a local commit must
+# pass — formatting, lint and the full release-mode test suite.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  style:
+    name: Style (fmt, clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # build.rs stamps the commit height as build number
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Lint
+        run: cargo clippy --release --all-targets -- -D warnings
+
+  test:
+    name: Test (release)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # build.rs stamps the commit height as build number
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --all-targets
+      - name: Test
+        # Release mode: the tree-sitter grammars are unusably slow at -O0
+        run: cargo test --release

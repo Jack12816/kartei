@@ -17,8 +17,8 @@ fn main() {
     println!("cargo:rustc-env=KARTEI_BUILD_DATE={}", build_date());
     println!("cargo:rustc-env=KARTEI_BUILD_NUMBER={}", build_number());
     // Re-stamp date and number whenever a commit lands
-    println!("cargo:rerun-if-changed=../.git/HEAD");
-    println!("cargo:rerun-if-changed=../.git/index");
+    println!("cargo:rerun-if-changed=.git/HEAD");
+    println!("cargo:rerun-if-changed=.git/index");
 }
 
 /// The build number: the git commit height of the repository.

@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# Bump the crate version, commit, tag and push — the tag triggers the
+# release workflow which builds and publishes the binaries.
+
+set -euo pipefail
+
+PROGNAME="$(basename "${0}")"
+ROOT="$(cd "$(dirname "${0}")/.." && pwd)"
+RELEASE_BRANCH="${RELEASE_BRANCH:-master}"
+REMOTE="${REMOTE:-origin}"
+
+# Print the usage help.
+function help()
+{
+  cat <<USAGE
+Usage: ${PROGNAME} VERSION
+
+Bump the crate version in Cargo.toml (and Cargo.lock), commit the bump,
+create the annotated tag vVERSION and push both to ${REMOTE} — the
+pushed tag triggers the GitHub release workflow.
+
+The working tree must be clean and checked out on the ${RELEASE_BRANCH}
+branch (override with RELEASE_BRANCH=..., the remote with REMOTE=...).
+
+Eg. ${0} 0.2.0
+    ${0} 1.0.0-rc1
+USAGE
+}
+
+# Print an error message followed by the help and exit.
+#
+# $1 - the error message
+function panic()
+{
+  >&2 echo "${PROGNAME}: ${1}"
+  >&2 printf '\n---\n'
+  >&2 help
+  exit 1
+}
+
+# Read the current crate version from Cargo.toml.
+function current-version()
+{
+  sed -n 's/^version = "\(.*\)"/\1/p' "${ROOT}/Cargo.toml" | head -n 1
+}
+
+if [ "${1:-}" = '-h' ] || [ "${1:-}" = '--help' ] || [ -z "${1:-}" ]; then
+  help
+  exit 0
+fi
+
+VERSION="${1}"
+TAG="v${VERSION}"
+
+# Check the prerequisites
+for tool in git cargo sed; do
+  command -v "${tool}" >/dev/null || panic "${tool}: command not found"
+done
+
+# Validate the version and the repository state
+[[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] \
+  || panic "invalid version '${VERSION}' (expected eg. 1.2.3 or 1.2.3-rc1)"
+cd "${ROOT}"
+[ "$(current-version)" != "${VERSION}" ] \
+  || panic "version ${VERSION} is already the current one"
+[ -z "$(git status --porcelain)" ] \
+  || panic 'the working tree is not clean'
+[ "$(git branch --show-current)" = "${RELEASE_BRANCH}" ] \
+  || panic "not on the ${RELEASE_BRANCH} branch"
+git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null \
+  && panic "tag ${TAG} already exists"
+[ -z "$(git ls-remote --tags "${REMOTE}" "refs/tags/${TAG}")" ] \
+  || panic "tag ${TAG} already exists on ${REMOTE}"
+
+# Bump the version in Cargo.toml and let Cargo.lock follow
+echo "> Bumping $(current-version) -> ${VERSION}"
+sed -i "0,/^version = \".*\"/s//version = \"${VERSION}\"/" Cargo.toml
+cargo update --workspace --offline --quiet
+
+# Smoke-test the build so a broken tree never gets tagged
+echo '> Building the release binary'
+cargo build --release --quiet
+
+# Commit, tag and push
+echo "> Committing and tagging ${TAG}"
+git commit --quiet -m "Bumped the version to ${VERSION}." \
+  -- Cargo.toml Cargo.lock
+git tag -a "${TAG}" -m "Bumped the version to ${VERSION}."
+echo "> Pushing ${RELEASE_BRANCH} and ${TAG} to ${REMOTE}"
+git push "${REMOTE}" "${RELEASE_BRANCH}" "${TAG}"
+
+echo "> Done - the release workflow builds ${TAG} now:"
+echo "  $(git remote get-url "${REMOTE}" \
+  | sed -e 's|^git@github.com:|https://github.com/|' -e 's|\.git$||')/actions"
